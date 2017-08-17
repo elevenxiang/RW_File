@@ -207,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     // write at the end of the file.
                     FileOutputStream fileOutputStream = new FileOutputStream(externalFilePath, true);
                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);
+
                     outputStreamWriter.write(et.getText().toString());
 
                     Toast.makeText(MainActivity.this,"Write to external path: "+externalFilePath+" successfully!",Toast.LENGTH_LONG).show();
