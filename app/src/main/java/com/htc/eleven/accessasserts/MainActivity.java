@@ -179,7 +179,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.WriteInternalStorage:
                 try {
                     // here use openFileOutput and transfer Context.MODE_PRIVATE argument !!!
-                    FileOutputStream fileOutputStream = openFileOutput(internalFile, Context.MODE_PRIVATE);
+//                    FileOutputStream fileOutputStream = openFileOutput(internalFile, Context.MODE_PRIVATE);
+
+                    // here write content under append mode
+                    FileOutputStream fileOutputStream = openFileOutput(internalFile, Context.MODE_APPEND);
                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);
 
                     outputStreamWriter.write(et.getText().toString());
