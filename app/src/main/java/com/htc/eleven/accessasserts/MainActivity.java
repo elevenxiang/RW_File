@@ -1,6 +1,8 @@
 package com.htc.eleven.accessasserts;
 
 import android.content.Context;
+import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -10,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -24,10 +27,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button readRaw  = null;
 
     private final String fileName = "eleven.txt";
-    private final String internalFile = "data.txt";
+    private final String internalFile = "data_internel.txt";
+    private final String externalFile = "data_externel.txt";
+    private String externalFilePath = Environment.getExternalStorageDirectory().getPath() + File.separator +externalFile;
 
     private EditText et = null;
     private TextView ret = null;
+
+    private final int requestCode = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +60,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.WriteInternalStorage).setOnClickListener(this);
         et= (EditText) findViewById(R.id.et);
         ret = (TextView) findViewById(R.id.ShowContent);
+
+
+        /**
+         * button which was used to read/write external data under /storage/emulated/0/ folder.
+         * */
+
+        findViewById(R.id.ReadExternalStorage).setOnClickListener(this);
+        findViewById(R.id.WriteExternalStorage).setOnClickListener(this);
+
+        // read/write external storage need request permission dynamically in code.
+
+        String[] permissions = new String[]{"android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.READ_EXTERNAL_STORAGE"};
+        requestPermissions(permissions, requestCode);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        // obtain requestPermission() result, and judge if should we go ahead.
+        if(requestCode == this.requestCode) {
+            for (int i = 0; i < permissions.length; i++) {
+                if (grantResults[i] != 0) {
+                    finish();
+                }
+            }
+        }
     }
 
     @Override
@@ -65,10 +99,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     InputStreamReader reader = new InputStreamReader(input);
                     BufferedReader bufferedReader = new BufferedReader(reader);
 
-                    String buf;
-                    while ((buf=bufferedReader.readLine()) != null) {
-                        System.out.println(buf);
-                    }
+                    // read and print to log.
+//                    String buf;
+//                    while ((buf=bufferedReader.readLine()) != null) {
+//                        System.out.println(buf);
+//                    }
+
+                    // read and post content to TextView.
+                    char[] data = new char[input.available()];
+                    bufferedReader.read(data);
+
+                    String content = new String(data);
+                    ret.setText(content);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -82,21 +124,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-                String buf;
+                // read and print content to log.
+//                String buf;
+//                try {
+//                    while((buf=bufferedReader.readLine()) != null) {
+//                        System.out.println(buf);
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//                try {
+//                    bufferedReader.close();
+//                    inputStreamReader.close();
+//                    inputStream.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+
+                // read and post content to TextView.
+                char[] data = new char[0];
                 try {
-                    while((buf=bufferedReader.readLine()) != null) {
-                        System.out.println(buf);
-                    }
+                    data = new char[inputStream.available()];
+                    bufferedReader.read(data);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                try {
-                    bufferedReader.close();
-                    inputStreamReader.close();
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+
+                String content = new String(data);
+                ret.setText(content);
             }
                 break;
 
@@ -133,15 +188,57 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     outputStreamWriter.flush();
                     fileOutputStream.flush();
 
+                    Toast.makeText(MainActivity.this,"Write successfully !", Toast.LENGTH_LONG).show();
                     // close to release.
                     outputStreamWriter.close();
                     fileOutputStream.close();
+
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                Toast.makeText(MainActivity.this,"Write successfully !", Toast.LENGTH_LONG).show();
+                break;
+            case R.id.WriteExternalStorage:
+                try {
+                    FileOutputStream fileOutputStream = new FileOutputStream(externalFilePath);
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream);
+
+                    outputStreamWriter.write(et.getText().toString());
+
+                    Toast.makeText(MainActivity.this,"Write to external path: "+externalFilePath+" successfully!",Toast.LENGTH_LONG).show();
+                    outputStreamWriter.flush();
+                    outputStreamWriter.close();
+                    fileOutputStream.close();
+
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case R.id.ReadExternalStorage:
+                File file = new File(externalFilePath);
+                if(file.exists()) {
+                    try {
+                        FileInputStream fis = new FileInputStream(file);
+                        InputStreamReader isr = new InputStreamReader(fis);
+
+                        char [] data = new char[fis.available()];
+                        isr.read(data);
+
+                        isr.close();
+                        fis.close();
+
+                        String str = new String(data);
+                        ret.setText(str);
+
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 break;
         }
     }
